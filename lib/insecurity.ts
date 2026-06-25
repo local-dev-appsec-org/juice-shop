@@ -53,7 +53,19 @@ export const cutOffPoisonNullByte = (str: string) => {
 
 export const isAuthorized = () => expressJwt(({ secret: publicKey }) as any)
 export const denyAll = () => expressJwt({ secret: '' + Math.random() } as any)
-export const authorize = (user = {}) => jwt.sign(user, privateKey, { expiresIn: '6h', algorithm: 'RS256' })
+export const authorize = (user: any = {}) => {
+  let tokenPayload = user
+  if (user?.data) {
+    // user.data may be a Sequelize model instance whose attributes live in its
+    // internal dataValues bucket, so flatten it to a plain object before stripping.
+    const data = typeof user.data.toJSON === 'function' ? user.data.toJSON() : { ...user.data }
+    // Never embed credential material (password hash, TOTP secret) in the JWT payload
+    delete data.password
+    delete data.totpSecret
+    tokenPayload = { ...user, data }
+  }
+  return jwt.sign(tokenPayload, privateKey, { expiresIn: '6h', algorithm: 'RS256' })
+}
 export const verify = (token: string) => token ? (jws.verify as ((token: string, secret: string) => boolean))(token, publicKey) : false
 export const decode = (token: string) => { return jws.decode(token)?.payload }
 
