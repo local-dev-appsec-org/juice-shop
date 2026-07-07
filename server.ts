@@ -351,8 +351,9 @@ restoreOverwrittenFilesWithOriginals().then(() => {
   /* BasketItems: API only accessible for authenticated users */
   app.use('/api/BasketItems', security.isAuthorized())
   app.use('/api/BasketItems/:id', security.isAuthorized())
-  /* Feedbacks: GET allowed for feedback carousel, POST allowed in order to provide feedback without being logged in */
+  /* Feedbacks: GET allowed for feedback carousel, POST scoped to the authenticated user to prevent forging feedback under another UserId */
   app.use('/api/Feedbacks/:id', security.isAuthorized())
+  app.post('/api/Feedbacks', security.appendUserId())
   /* Users: Only POST is allowed in order to register a new user */
   app.get('/api/Users', security.isAuthorized())
   app.route('/api/Users/:id')
